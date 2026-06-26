@@ -1,65 +1,108 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { audio } from "@/lib/audio";
+import Ambient from "@/components/Ambient";
+import Scene1 from "@/components/Scene1";
+import Scene2 from "@/components/Scene2";
+import Scene3 from "@/components/Scene3";
+import Scene4 from "@/components/Scene4";
+
+const GRADIENTS = [
+  "linear-gradient(135deg, #8E2DE2 0%, #FF69B4 100%)",
+  "linear-gradient(135deg, #C471ED 0%, #F64F59 100%)",
+  "linear-gradient(135deg, #D16BA5 0%, #C777B9 50%, #BA83CA 100%)",
+  "linear-gradient(160deg, #8E2DE2 0%, #C471ED 45%, #FF69B4 100%)",
+];
 
 export default function Home() {
+  const [started, setStarted] = useState(false);
+  const [scene, setScene] = useState(1);
+  const [muted, setMuted] = useState(false);
+  const [heartburst, setHeartburst] = useState(false);
+
+  const begin = () => {
+    audio.unlock();
+    audio.requestPad(); // soft ambient background
+    setStarted(true);
+  };
+
+  const toggleMute = () => setMuted(audio.toggleMute());
+
+  const goTo = useCallback((n: number) => setScene(n), []);
+  const onHearts = useCallback(() => setHeartburst(true), []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="app-root">
+      {/* Cross-fading gradient backgrounds */}
+      {GRADIENTS.map((g, i) => (
+        <motion.div
+          key={i}
+          className="bg-layer"
+          style={{ background: g }}
+          initial={false}
+          animate={{ opacity: scene === i + 1 ? 1 : 0 }}
+          transition={{ duration: 1.1, ease: "easeInOut" }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      ))}
+      <div className="bg-vignette" />
+
+      <Ambient heartburst={heartburst} />
+
+      {/* Mute / unmute */}
+      {started && (
+        <button className="mute-btn" onClick={toggleMute} aria-label="Toggle music">
+          {muted ? "🔇" : "🔊"}
+        </button>
+      )}
+
+      {/* Start gate (unlocks audio) */}
+      <AnimatePresence>
+        {!started && (
+          <motion.div
+            className="start-overlay"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <motion.div
+              className="start-card"
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 110, damping: 13 }}
+            >
+              <div className="start-emoji bounce-soft">🎀</div>
+              <h1 className="title-fancy start-title">A little surprise</h1>
+              <p className="normal-text start-sub">made with love, just for you</p>
+              <button className="btn btn-primary" onClick={begin}>
+                TAP TO BEGIN
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Scenes */}
+      {started && (
+        <main className="stage">
+          <AnimatePresence mode="wait">
+            <motion.section
+              key={scene}
+              className="scene"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+            >
+              {scene === 1 && <Scene1 onNext={() => goTo(2)} />}
+              {scene === 2 && <Scene2 onNext={() => goTo(3)} />}
+              {scene === 3 && <Scene3 onNext={() => goTo(4)} />}
+              {scene === 4 && <Scene4 onHearts={onHearts} />}
+            </motion.section>
+          </AnimatePresence>
+        </main>
+      )}
     </div>
   );
 }

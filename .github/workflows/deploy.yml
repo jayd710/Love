@@ -29,6 +29,8 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           static_site_generator: next
+          # Auto-enable Pages on first run so no manual settings toggle is needed.
+          enablement: true
       - run: npm ci
       - run: npm run build
       - name: Disable Jekyll processing

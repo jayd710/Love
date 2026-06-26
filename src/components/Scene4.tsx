@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { audio } from "@/lib/audio";
+import featherImg from "@/assets/peacock-feather.png";
 
 // Verbatim — exactly as written, curly apostrophes and all.
 const LETTER_LINES = [
@@ -139,13 +140,7 @@ export default function Scene4({ onHearts }: { onHearts: () => void }) {
               whileHover={!opened ? { scale: 1.12, rotate: -6 } : undefined}
               transition={{ duration: 0.5 }}
             >
-              <Image
-                src="/peacock-feather.png"
-                alt="Peacock feather seal"
-                width={120}
-                height={150}
-                priority
-              />
+              <Image src={featherImg} alt="Peacock feather seal" priority />
             </motion.button>
           </motion.div>
         </div>
